@@ -1,0 +1,32 @@
+{
+  "name": "Peblo TV Mini",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+
+  "features": {
+    // Lets you run `docker compose up --build` inside the Codespace.
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    // For the local-dev / test path (pytest, npm) without Docker.
+    "ghcr.io/devcontainers/features/python:1": { "version": "3.11" },
+    "ghcr.io/devcontainers/features/node:1": { "version": "20" }
+  },
+
+  // Codespaces auto-forwards these; open the Viewer (5174) once it's up.
+  "forwardPorts": [8000, 5173, 5174],
+  "portsAttributes": {
+    "8000": { "label": "API", "onAutoForward": "silent", "visibility": "public" },
+    "5173": { "label": "CMS", "onAutoForward": "openBrowser" },
+    "5174": { "label": "Viewer", "onAutoForward": "openBrowser" }
+  },
+
+  "postCreateCommand": "echo 'Ready. Run:  docker compose up --build   then open the forwarded Viewer (5174) / CMS (5173).'",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "dbaeumer.vscode-eslint",
+        "ms-azuretools.vscode-docker"
+      ]
+    }
+  }
+}

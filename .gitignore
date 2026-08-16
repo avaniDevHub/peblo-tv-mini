@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.db
+_data/
+.pytest_cache/
+.env
+# Node
+node_modules/
+dist/
+.vite/
+# OS
+.DS_Store
+# challenge scratch
+_challenge/

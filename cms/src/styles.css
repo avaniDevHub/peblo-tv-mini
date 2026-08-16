@@ -1,0 +1,95 @@
+/* Utilitarian CMS styling — dense, legible, fast to scan. Not pretty; usable. */
+:root {
+  --bg: #f4f5f7;
+  --panel: #ffffff;
+  --border: #d9dce1;
+  --text: #1c2230;
+  --muted: #5b6472;
+  --brand: #3a5bd9;
+  --brand-dark: #2c46ad;
+  --danger: #c0392b;
+  --danger-bg: #fdecea;
+  --ok: #1e7e46;
+  --ok-bg: #e7f6ec;
+  --warn-bg: #fff6e0;
+  --warn-border: #f0c74a;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+}
+a { color: var(--brand); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.topbar {
+  display: flex; align-items: center; gap: 16px;
+  background: var(--panel); border-bottom: 1px solid var(--border);
+  padding: 10px 20px; position: sticky; top: 0; z-index: 10;
+}
+.topbar .brand { font-weight: 700; font-size: 16px; }
+.topbar nav a { padding: 6px 10px; border-radius: 6px; color: var(--muted); font-weight: 600; }
+.topbar nav a.active { background: #eef1fb; color: var(--brand); }
+.topbar .spacer { flex: 1; }
+
+.container { max-width: 1100px; margin: 20px auto; padding: 0 20px; }
+
+.panel { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 18px; margin-bottom: 16px; }
+.panel h2 { margin: 0 0 12px; font-size: 16px; }
+.row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+.grow { flex: 1; }
+
+label { display: block; font-weight: 600; margin: 10px 0 4px; color: var(--muted); }
+input, select, textarea {
+  width: 100%; padding: 8px 10px; border: 1px solid var(--border);
+  border-radius: 6px; font-size: 14px; background: #fff; color: var(--text);
+}
+textarea { min-height: 70px; resize: vertical; }
+
+button {
+  padding: 8px 14px; border: 1px solid var(--brand); background: var(--brand);
+  color: #fff; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 14px;
+}
+button:hover { background: var(--brand-dark); }
+button.secondary { background: #fff; color: var(--brand); }
+button.ghost { background: transparent; color: var(--muted); border-color: var(--border); }
+button.danger { background: var(--danger); border-color: var(--danger); }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+th { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .03em; }
+tr:hover td { background: #fafbfe; }
+
+.badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+.badge.published { background: var(--ok-bg); color: var(--ok); }
+.badge.draft { background: #eceef2; color: var(--muted); }
+.badge.lang { background: #eef1fb; color: var(--brand); margin-right: 4px; }
+
+.pill { padding: 4px 10px; border: 1px solid var(--border); border-radius: 999px; background: #fff; cursor: pointer; font-size: 13px; }
+.pill.active { background: var(--brand); color: #fff; border-color: var(--brand); }
+
+.state { text-align: center; padding: 40px 20px; color: var(--muted); }
+.state.error { color: var(--danger); }
+.errorbox { background: var(--danger-bg); border: 1px solid #f5c6c0; color: var(--danger); padding: 10px 12px; border-radius: 8px; margin: 8px 0; }
+.okbox { background: var(--ok-bg); border: 1px solid #bfe6cd; color: var(--ok); padding: 10px 12px; border-radius: 8px; margin: 8px 0; }
+.warnbox { background: var(--warn-bg); border: 1px solid var(--warn-border); padding: 10px 12px; border-radius: 8px; margin: 8px 0; }
+
+.muted { color: var(--muted); }
+.small { font-size: 12px; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+/* Artwork slots */
+.slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.slot { border: 1px dashed var(--border); border-radius: 10px; padding: 12px; }
+.slot h4 { margin: 0 0 4px; }
+.slot .spec { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+.slot .preview { width: 100%; aspect-ratio: 16/9; background: #eceef2; border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; }
+.slot.poster .preview { aspect-ratio: 2/3; }
+.slot .preview img { width: 100%; height: 100%; object-fit: cover; }
+.slot .empty { color: var(--muted); font-size: 12px; text-align: center; }
+
+.grid-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }

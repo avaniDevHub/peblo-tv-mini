@@ -1,0 +1,87 @@
+# Peblo TV Mini — full stack: Postgres + API + CMS + Viewer.
+#
+#   docker compose up --build
+#
+# Then open:
+#   Viewer (public browse) : http://localhost:5174
+#   CMS    (internal admin) : http://localhost:5173
+#   API docs               : http://localhost:8000/docs
+#
+# On first boot the API runs migrations, seeds the (deliberately imperfect)
+# data, prints the validation report showing the built-in block, then applies
+# the documented fix and publishes so the viewer is populated. Set
+# PEBLO_DEMO_PUBLISH=0 (see .env.example) to see the genuine empty state.
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-peblo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-peblo}
+      POSTGRES_DB: ${POSTGRES_DB:-peblo}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      # API waits for this to pass before running migrations.
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-peblo} -d ${POSTGRES_DB:-peblo}"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    # No host port published by default — only the API talks to the DB.
+
+  api:
+    build:
+      context: ./backend
+    environment:
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-peblo}:${POSTGRES_PASSWORD:-peblo}@db:5432/${POSTGRES_DB:-peblo}
+      STORAGE_BACKEND: local
+      STORAGE_LOCAL_DIR: /data/storage
+      # Browser-facing URL for artwork. The browser runs on the host, so this
+      # must be the host-published API address, not the compose-internal name.
+      MEDIA_BASE_URL: http://localhost:8000/media
+      EDITOR_TOKEN: ${EDITOR_TOKEN:-editor-token}
+      ADMIN_TOKEN: ${ADMIN_TOKEN:-admin-token}
+      CORS_ORIGINS: http://localhost:5173,http://localhost:5174,http://127.0.0.1:5173,http://127.0.0.1:5174
+      # 1 = seed then demo-publish so the viewer is populated on first boot.
+      # 0 = seed only; catalogue stays unpublished (genuine empty state).
+      PEBLO_DEMO_PUBLISH: ${PEBLO_DEMO_PUBLISH:-1}
+    ports:
+      - "8000:8000"
+    volumes:
+      - media_data:/data/storage
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 20s
+
+  cms:
+    build:
+      context: ./cms
+      args:
+        # Baked at build time by Vite; must be host-reachable (see Dockerfile).
+        VITE_API_BASE: http://localhost:8000
+        VITE_EDITOR_TOKEN: ${EDITOR_TOKEN:-editor-token}
+        VITE_ADMIN_TOKEN: ${ADMIN_TOKEN:-admin-token}
+    ports:
+      - "5173:80"
+    depends_on:
+      - api
+
+  viewer:
+    build:
+      context: ./viewer
+      args:
+        VITE_API_BASE: http://localhost:8000
+    ports:
+      - "5174:80"
+    depends_on:
+      - api
+
+volumes:
+  db_data:
+  media_data:
