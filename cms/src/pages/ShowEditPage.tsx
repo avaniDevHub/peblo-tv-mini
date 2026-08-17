@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useEpisodes, useReference, useSaveShow, useShow, useDeleteShow } from "../api/hooks";
 import { ErrorLines, ErrorState, Loading } from "../components/states";
 import EpisodeEditor from "../components/EpisodeEditor";
 import type { Episode } from "../lib/types";
+
+const EPISODE_PAGE_SIZE = 10;
 
 export default function ShowEditPage({ mode }: { mode: "new" | "edit" }) {
   const { slug } = useParams();
@@ -18,6 +20,16 @@ export default function ShowEditPage({ mode }: { mode: "new" | "edit" }) {
 
   const [editingEpisode, setEditingEpisode] = useState<Episode | "new" | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+
+  // Episode list filters
+  const [episodeSearch, setEpisodeSearch] = useState("");
+  const [episodeLanguage, setEpisodeLanguage] = useState("");
+  const [episodeStatus, setEpisodeStatus] = useState("");
+  const [episodePage, setEpisodePage] = useState(0);
+
+  // Reset to first page whenever episode filters change.
+  const episodeFiltersKey = `${episodeSearch}|${episodeLanguage}|${episodeStatus}`;
+  useMemo(() => setEpisodePage(0), [episodeFiltersKey]);
 
   // local form seeded from server data
   const [form, setForm] = useState({
@@ -197,52 +209,142 @@ export default function ShowEditPage({ mode }: { mode: "new" | "edit" }) {
           ) : (episodes.data?.length ?? 0) === 0 ? (
             <div className="state">No episodes yet. Add the first one.</div>
           ) : (
-            <table>
-              <thead>
-                <tr>
-                  <th>S/E</th>
-                  <th>Title</th>
-                  <th>Lang</th>
-                  <th>Duration</th>
-                  <th>Artwork</th>
-                  <th>Status</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {episodes.data!.map((ep) => (
-                  <tr key={ep.id}>
-                    <td className="mono">
-                      S{ep.season_number}E{ep.episode_number}
-                      {ep.season_number === 0 && <span className="small muted"> (trailer)</span>}
-                    </td>
-                    <td>{ep.title}</td>
-                    <td>
-                      <span className="badge lang">{ep.language}</span>
-                    </td>
-                    <td>{ep.duration_seconds ? `${ep.duration_seconds}s` : <span className="muted">—</span>}</td>
-                    <td className="small">
-                      {["poster", "banner", "thumbnail"].map((k) => {
-                        const has = ep.artwork.some((a) => a.kind === k);
-                        return (
-                          <span key={k} title={k} style={{ opacity: has ? 1 : 0.3 }}>
-                            {k[0].toUpperCase()}
-                          </span>
-                        );
-                      })}
-                    </td>
-                    <td>
-                      <span className={`badge ${ep.status}`}>{ep.status}</span>
-                    </td>
-                    <td>
-                      <button className="ghost small" onClick={() => setEditingEpisode(ep)}>
-                        Edit
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <>
+              <div className="row" style={{ marginBottom: 12 }}>
+                <input
+                  className="grow"
+                  placeholder="Search episode title…"
+                  value={episodeSearch}
+                  onChange={(e) => setEpisodeSearch(e.target.value)}
+                />
+                <select
+                  value={episodeLanguage}
+                  onChange={(e) => setEpisodeLanguage(e.target.value)}
+                  style={{ width: 120 }}
+                >
+                  <option value="">All languages</option>
+                  {Array.from(new Set(episodes.data!.map((ep) => ep.language)))
+                    .sort()
+                    .map((lang) => (
+                      <option key={lang} value={lang}>
+                        {lang}
+                      </option>
+                    ))}
+                </select>
+                <select
+                  value={episodeStatus}
+                  onChange={(e) => setEpisodeStatus(e.target.value)}
+                  style={{ width: 120 }}
+                >
+                  <option value="">All statuses</option>
+                  <option value="published">published</option>
+                  <option value="draft">draft</option>
+                </select>
+              </div>
+
+              {(() => {
+                // Filter episodes
+                const filtered = episodes.data!.filter((ep) => {
+                  const matchesSearch =
+                    episodeSearch === "" || ep.title.toLowerCase().includes(episodeSearch.toLowerCase());
+                  const matchesLanguage = episodeLanguage === "" || ep.language === episodeLanguage;
+                  const matchesStatus = episodeStatus === "" || ep.status === episodeStatus;
+                  return matchesSearch && matchesLanguage && matchesStatus;
+                });
+
+                const pageCount = Math.max(1, Math.ceil(filtered.length / EPISODE_PAGE_SIZE));
+                const pageItems = filtered.slice(
+                  episodePage * EPISODE_PAGE_SIZE,
+                  episodePage * EPISODE_PAGE_SIZE + EPISODE_PAGE_SIZE
+                );
+
+                return (
+                  <>
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>S/E</th>
+                          <th>Title</th>
+                          <th>Lang</th>
+                          <th>Duration</th>
+                          <th>Artwork</th>
+                          <th>Status</th>
+                          <th></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {pageItems.length === 0 ? (
+                          <tr>
+                            <td colSpan={7} style={{ textAlign: "center", padding: 20 }}>
+                              <span className="muted">No episodes match your filters.</span>
+                            </td>
+                          </tr>
+                        ) : (
+                          pageItems.map((ep) => (
+                            <tr key={ep.id}>
+                              <td className="mono">
+                                S{ep.season_number}E{ep.episode_number}
+                                {ep.season_number === 0 && <span className="small muted"> (trailer)</span>}
+                              </td>
+                              <td>{ep.title}</td>
+                              <td>
+                                <span className="badge lang">{ep.language}</span>
+                              </td>
+                              <td>{ep.duration_seconds ? `${ep.duration_seconds}s` : <span className="muted">—</span>}</td>
+                              <td className="small">
+                                {["poster", "banner", "thumbnail"].map((k) => {
+                                  const has = ep.artwork.some((a) => a.kind === k);
+                                  return (
+                                    <span key={k} title={k} style={{ opacity: has ? 1 : 0.3 }}>
+                                      {k[0].toUpperCase()}
+                                    </span>
+                                  );
+                                })}
+                              </td>
+                              <td>
+                                <span className={`badge ${ep.status}`}>{ep.status}</span>
+                              </td>
+                              <td>
+                                <button
+                                  className="ghost small"
+                                  onClick={() => setEditingEpisode(ep)}
+                                >
+                                  Edit
+                                </button>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                    {filtered.length > 0 && (
+                      <div className="row" style={{ marginTop: 12, justifyContent: "space-between" }}>
+                        <span className="small muted">
+                          {filtered.length} episode{filtered.length === 1 ? "" : "s"} · page {episodePage + 1} of{" "}
+                          {pageCount}
+                        </span>
+                        <div className="row">
+                          <button
+                            className="ghost"
+                            disabled={episodePage === 0}
+                            onClick={() => setEpisodePage((p) => p - 1)}
+                          >
+                            ← Prev
+                          </button>
+                          <button
+                            className="ghost"
+                            disabled={episodePage >= pageCount - 1}
+                            onClick={() => setEpisodePage((p) => p + 1)}
+                          >
+                            Next →
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
+            </>
           )}
         </div>
       )}
