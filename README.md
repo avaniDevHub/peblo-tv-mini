@@ -143,10 +143,25 @@ The viewer is **read-heavy, edit-rare**, and correctness must be *stable*: a chi
 
 ### 5. What I left out, and AI-tool use
 
-**Left out (deliberately, to stay in the time box):** real auth (static bearer tokens stand in for OIDC/JWT — roles *are* genuinely enforced, just not cryptographically verified); the stretch goals (catalogue rollback UI, publish dry-run diff, full change audit log) — though the versioned snapshots + `publish_runs` table are the foundation for all three; pagination in the viewer/search responses; image thumbnailing/transcoding on upload (we validate and store the original); and a real object store in the demo (local disk; R2 path is implemented but exercised only by unit tests). CMS/viewer styling is functional, not polished.
+The current implementation uses role-mapped bearer tokens for the demo rather than a production OIDC/JWT identity system. Artwork is validated and stored in its original form; image transcoding and thumbnail generation are intentionally outside the current storage pipeline. The demo uses local storage, while the R2 implementation is available behind the storage abstraction.
 
-**AI tools:** I used an AI coding assistant (Claude) throughout as a pair — scaffolding boilerplate (Pydantic schemas, Alembic setup, React hooks), drafting editor-facing error copy, and rubber-ducking the atomic-publish and storage-abstraction designs. **Accepted:** the write-temp-`fsync`-`replace` atomicity approach, the `is_trailer` flag over magic-number checks, and the "return all validation errors at once" UX. **Rejected / corrected:** an early suggestion to overwrite `current.json` in place (defeats atomicity — replaced with versioned-write-then-swap); a client-side-only artwork size check (the CMS always POSTs to the server so validation can't be bypassed); and a tempting `lru_cache` on storage that caused a cross-test contamination bug I had to hunt down and fix in the test reset. The judgment calls and the verification (36 tests, end-to-end curl of every endpoint) are mine.
+The next improvements I'd consider are production identity integration, image processing, and more granular catalogue publishing as the catalogue grows.
 
+**AI tools:** I used Claude as a coding and reasoning assistant during development, mainly for scaffolding, boilerplate, error-message wording, and exploring implementation approaches. I treated generated code as a starting point and verified the important behavior through tests and end-to-end checks.
+
+One example was catalogue publishing: an early approach suggested overwriting current.json directly. I rejected that because it could expose a partially written catalogue, and implemented the versioned snapshot plus atomic pointer swap instead. I also kept artwork validation on the server rather than relying on the React client, and corrected a storage-cache approach that caused test isolation issues.
+
+The final architecture, trade-offs, implementation decisions, and verification were mine.
+---
+
+## Optional Stretch
+
+**Status: Partially implemented**
+
+- **Versioned catalogue:** Implemented. Each publish creates a versioned catalogue snapshot, providing the foundation for rollback to a previous run.
+- **Rollback to a previous run:** Not implemented as a user-facing action.
+- **Publish dry-run with diff:** Not implemented.
+- **Audit log of who changed what:** Not implemented. Publish runs record publish activity, but a full CRUD change history is not included.
 ---
 
 ## Operability
