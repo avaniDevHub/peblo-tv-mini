@@ -103,15 +103,15 @@ The seed data ships with two deliberate defects, both handled honestly rather th
 - **Reference data (`sections`/`categories`/`languages`/artwork specs) lives in one file** (`reference.json`), served at `GET /reference`, read by both UIs — allowed values are defined once.
 - **SQLite for tests, Postgres for real.** The same models/migration run on both; tests use SQLite + a temp dir for hermetic speed (no external services in CI).
 
-### Time spent (~7 h)
+### Time spent (~15.25 h)
 
 | Part | ~Time |
 |---|---|
-| A — Backend (schema, upload, publish, search, auth, tests) | 3.0 h |
-| B — CMS | 1.5 h |
+| A — Backend (schema, upload, publish, search, auth, tests) | 6.0 h |
+| B — CMS | 4 h |
 | C — Viewer | 1.25 h |
-| D — Pipeline & operability | 0.75 h |
-| E — Written + verification pass | 0.5 h |
+| D — Pipeline & operability | 3 h |
+| E — Written + verification pass | 1 h |
 
 ---
 
