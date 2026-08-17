@@ -34,7 +34,7 @@ Then open:
 
 No `.env` needed — compose has working defaults for every variable (`.env.example` documents them all). On first boot the API: runs migrations → seeds the (deliberately imperfect) data → **prints the validation report showing the built-in block** → applies the one documented fix → publishes, so the viewer is populated. To see the genuine empty-state / validation-gate instead, set `PEBLO_DEMO_PUBLISH=0` (see [First-boot behaviour](#first-boot-behaviour-important)).
 
-**Sign-in (CMS):** a role switcher in the top bar toggles `admin` (can publish) vs `editor` (cannot). Demo bearer tokens map to roles server-side.
+**Sign-in (CMS):** a role switcher in the top bar toggles `admin` (can publish/CRUD) vs `editor` (cannot publish/only CRUD). Demo bearer tokens map to roles server-side.
 
 ### Local dev (no Docker)
 
